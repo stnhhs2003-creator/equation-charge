@@ -101,6 +101,28 @@ body.bigscreen .pad button.fire{width:210px;font-size:23px}body.bigscreen #scree
 body.bigscreen #cv{height:auto;object-fit:contain;aspect-ratio:16/9}
 body.bigscreen .note{font-size:17px}body.bigscreen .pad{user-select:none;-webkit-user-select:none}
 @media(max-width:600px){body.bigscreen .pad button{width:70px;height:86px;font-size:21px}body.bigscreen .pad button.fire{width:135px;font-size:20px}body.bigscreen #screen-game .hud{font-size:16px}}
+
+/* Classroom viewport fit v2: preserve canvas ratio and centralize controls */
+body.play-fit{padding:0;overflow:hidden;overscroll-behavior:none}
+body.play-fit .wrap{box-sizing:border-box;width:100%;max-width:none;height:100vh;height:100dvh;padding: max(4px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));gap:4px;display:flex;flex-direction:column;overflow:hidden}
+body.play-fit .display-tools{flex:none;margin:0;justify-content:center;gap:6px}
+body.play-fit .display-tools button,body.play-fit #screen-game>.row button{min-height:28px;padding:3px 10px;font-size:12px;border-width:1px;border-radius:7px}
+body.play-fit #screen-game{flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:5px;align-items:center}
+body.play-fit #screen-game .hud{width:min(100%,900px);justify-self:center;flex-wrap:nowrap;font:700 clamp(12px,2.2vh,22px)/1.2 var(--body)}
+body.play-fit #cv{width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:16/9;justify-self:center;align-self:center;border:1px solid #000;box-shadow:0 0 0 1px var(--line)}
+body.play-fit .pad{justify-content:center;align-items:center;gap:clamp(8px,2vw,24px)}
+body.play-fit .pad .g{gap:clamp(5px,1vw,12px)}
+body.play-fit .pad button{width:clamp(44px,8vh,90px);height:clamp(44px,8vh,90px);min-height:0;font:700 clamp(14px,2.4vh,23px) var(--body);border-radius:12px;padding:0}
+body.play-fit .pad button.fire{width:clamp(86px,15vh,165px);font-size:clamp(12px,2vh,20px)}
+body.play-fit #screen-game>.row{justify-content:center;gap:10px}
+@media(orientation:landscape) and (max-height:500px){
+body.play-fit .wrap{gap:2px}
+body.play-fit #screen-game{gap:3px}
+body.play-fit .display-tools button,body.play-fit #screen-game>.row button{min-height:22px;font-size:11px;padding:2px 8px}
+body.play-fit .pad button{height:44px;width:48px;font-size:15px}
+body.play-fit .pad button.fire{width:100px;font-size:12px}
+}
+
 </style>
 
 <div class="wrap">
@@ -1336,4 +1358,10 @@ renderDiffs();musicLabel();
 const initialParams=new URLSearchParams(location.search);const selectedUnit=initialParams.get('unit');if([...document.getElementById('mathUnit').options].some(o=>o.value===selectedUnit))document.getElementById('mathUnit').value=selectedUnit;document.body.classList.toggle('bigscreen',initialParams.get('mode')==='screen');document.getElementById('displayMode').textContent='大屏模式：'+(document.body.classList.contains('bigscreen')?'開':'關');
 document.getElementById('displayMode').onclick=function(){const active=document.body.classList.toggle('bigscreen');this.textContent='大屏模式：'+(active?'開':'關')};
 document.getElementById('displayFull').onclick=async function(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{toast('瀏覽器未支援全螢幕，仍可使用大屏模式')}};
+</script><script>
+(()=>{const game=document.getElementById('screen-game');const cv=document.getElementById('cv');let pending=0;
+function fit(){pending=0;const active=!game.hidden;document.body.classList.toggle('play-fit',active);if(!active)return;const hud=game.querySelector('.hud'),pad=game.querySelector('.pad'),row=game.querySelector('.row');const gap=parseFloat(getComputedStyle(game).rowGap)||0;const h=Math.max(1,game.clientHeight-hud.offsetHeight-pad.offsetHeight-row.offsetHeight-3*gap);const w=Math.min(game.clientWidth,h*16/9);cv.style.width=Math.floor(w)+'px';cv.style.height=Math.floor(w*9/16)+'px';}
+function schedule(){if(!pending)pending=requestAnimationFrame(fit)}
+new MutationObserver(schedule).observe(game,{attributes:true,attributeFilter:['hidden']});new MutationObserver(schedule).observe(document.body,{attributes:true,attributeFilter:['class']});window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);document.addEventListener('fullscreenchange',schedule);schedule();
+})();
 </script></html>
